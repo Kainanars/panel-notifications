@@ -30,7 +30,7 @@ app.post('/api/clientes', async (req, res) => {
   try {
     const result = await pool.query(
       'INSERT INTO clientes (nome, telefone, dia_vencimento, plano, ativo) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [nome, telefone, dia_vencimento, plano, ativo ?? true]
+      [nome, telefone, dia_vencimento, plano, ativo ?? true],
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -44,7 +44,7 @@ app.put('/api/clientes/:id', async (req, res) => {
   try {
     const result = await pool.query(
       'UPDATE clientes SET nome=$1, telefone=$2, dia_vencimento=$3, plano=$4, ativo=$5 WHERE id=$6 RETURNING *',
-      [nome, telefone, dia_vencimento, plano, ativo, req.params.id]
+      [nome, telefone, dia_vencimento, plano, ativo, req.params.id],
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -57,7 +57,7 @@ app.patch('/api/clientes/:id/toggle', async (req, res) => {
   try {
     const result = await pool.query(
       'UPDATE clientes SET ativo = NOT ativo WHERE id=$1 RETURNING *',
-      [req.params.id]
+      [req.params.id],
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -75,5 +75,5 @@ app.delete('/api/clientes/:id', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3030;
 app.listen(PORT, () => console.log(`Painel rodando na porta ${PORT}`));
