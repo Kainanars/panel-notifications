@@ -1,645 +1,763 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MVM NET — Clientes</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0a0a0f;
-    --surface: #111118;
-    --surface2: #1a1a24;
-    --border: #2a2a38;
-    --accent: #f97316;
-    --accent2: #3b82f6;
-    --text: #e8e8f0;
-    --muted: #6b6b80;
-    --green: #22c55e;
-    --red: #ef4444;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Background grid */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(var(--border) 1px, transparent 1px),
-      linear-gradient(90deg, var(--border) 1px, transparent 1px);
-    background-size: 40px 40px;
-    opacity: 0.3;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .container {
-    position: relative;
-    z-index: 1;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 24px 60px;
-  }
-
-  /* Header */
-  header {
-    padding: 32px 0 40px;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 40px;
-  }
-
-  .logo {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .logo-tag {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    color: var(--accent);
-    letter-spacing: 3px;
-    text-transform: uppercase;
-  }
-
-  .logo-title {
-    font-size: 36px;
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -1px;
-  }
-
-  .logo-title span { color: var(--accent); }
-
-  .header-stats {
-    display: flex;
-    gap: 32px;
-    align-items: flex-end;
-  }
-
-  .stat {
-    text-align: right;
-  }
-
-  .stat-num {
-    font-size: 32px;
-    font-weight: 800;
-    line-height: 1;
-    font-family: 'Space Mono', monospace;
-  }
-
-  .stat-num.green { color: var(--green); }
-  .stat-num.orange { color: var(--accent); }
-
-  .stat-label {
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-top: 4px;
-  }
-
-  /* Toolbar */
-  .toolbar {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 24px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-
-  .search-wrap {
-    flex: 1;
-    min-width: 200px;
-    position: relative;
-  }
-
-  .search-wrap input {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 12px 16px 12px 44px;
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    border-radius: 8px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .search-wrap input:focus { border-color: var(--accent); }
-
-  .search-icon {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--muted);
-    font-size: 16px;
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
-
-  .btn-primary {
-    background: var(--accent);
-    color: #fff;
-  }
-
-  .btn-primary:hover { background: #ea6a00; transform: translateY(-1px); }
-
-  .btn-ghost {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border);
-  }
-
-  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-ghost.active { border-color: var(--accent2); color: var(--accent2); }
-
-  /* Table */
-  .table-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  thead tr {
-    border-bottom: 1px solid var(--border);
-    background: var(--surface2);
-  }
-
-  th {
-    padding: 14px 20px;
-    text-align: left;
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-weight: 400;
-  }
-
-  tbody tr {
-    border-bottom: 1px solid var(--border);
-    transition: background 0.15s;
-  }
-
-  tbody tr:last-child { border-bottom: none; }
-  tbody tr:hover { background: var(--surface2); }
-
-  td {
-    padding: 16px 20px;
-    font-size: 14px;
-  }
-
-  .td-nome { font-weight: 600; }
-
-  .td-tel {
-    font-family: 'Space Mono', monospace;
-    font-size: 12px;
-    color: var(--muted);
-  }
-
-  .td-dia {
-    font-family: 'Space Mono', monospace;
-    font-weight: 700;
-    color: var(--accent);
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
-  .badge-active {
-    background: rgba(34, 197, 94, 0.12);
-    color: var(--green);
-    border: 1px solid rgba(34, 197, 94, 0.25);
-  }
-
-  .badge-inactive {
-    background: rgba(107, 107, 128, 0.12);
-    color: var(--muted);
-    border: 1px solid var(--border);
-  }
-
-  .badge::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-  }
-
-  .actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .icon-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    transition: all 0.15s;
-  }
-
-  .icon-btn:hover { border-color: var(--accent2); color: var(--accent2); }
-  .icon-btn.danger:hover { border-color: var(--red); color: var(--red); }
-  .icon-btn.toggle-btn:hover { border-color: var(--green); color: var(--green); }
-
-  /* Empty state */
-  .empty {
-    text-align: center;
-    padding: 80px 20px;
-    color: var(--muted);
-  }
-
-  .empty-icon { font-size: 48px; margin-bottom: 16px; }
-  .empty-text { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
-  .empty-sub { font-size: 14px; }
-
-  /* Modal */
-  .overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(4px);
-    z-index: 100;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-
-  .overlay.open { display: flex; }
-
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    width: 100%;
-    max-width: 480px;
-    animation: slideUp 0.2s ease;
-  }
-
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .modal-header {
-    padding: 24px 24px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .modal-title {
-    font-size: 20px;
-    font-weight: 800;
-  }
-
-  .modal-close {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s;
-  }
-
-  .modal-close:hover { border-color: var(--red); color: var(--red); }
-
-  .modal-body { padding: 24px; }
-
-  .form-group { margin-bottom: 16px; }
-
-  label {
-    display: block;
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 8px;
-  }
-
-  input[type="text"],
-  input[type="number"],
-  select {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 12px 14px;
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    border-radius: 8px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  input:focus, select:focus { border-color: var(--accent); }
-
-  select option { background: var(--surface2); }
-
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-  .toggle-wrap {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-  }
-
-  .toggle-wrap label {
-    margin: 0;
-    font-size: 13px;
-    letter-spacing: 0;
-    text-transform: none;
-    color: var(--text);
-    cursor: pointer;
-  }
-
-  .toggle {
-    position: relative;
-    width: 40px;
-    height: 22px;
-    flex-shrink: 0;
-  }
-
-  .toggle input { opacity: 0; width: 0; height: 0; }
-
-  .slider {
-    position: absolute;
-    inset: 0;
-    background: var(--border);
-    border-radius: 20px;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-
-  .slider::before {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    left: 3px;
-    top: 3px;
-    background: white;
-    border-radius: 50%;
-    transition: 0.2s;
-  }
-
-  .toggle input:checked + .slider { background: var(--green); }
-  .toggle input:checked + .slider::before { transform: translateX(18px); }
-
-  .modal-footer {
-    padding: 0 24px 24px;
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-  }
-
-  /* Toast */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 20px;
-    font-size: 14px;
-    font-weight: 600;
-    z-index: 200;
-    transform: translateY(100px);
-    opacity: 0;
-    transition: all 0.3s;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .toast.show { transform: translateY(0); opacity: 1; }
-  .toast.success { border-color: var(--green); color: var(--green); }
-  .toast.error { border-color: var(--red); color: var(--red); }
-
-  /* Confirm dialog */
-  .confirm-modal { max-width: 380px; }
-  .confirm-text { font-size: 15px; color: var(--muted); margin-top: 8px; }
-
-  @media (max-width: 640px) {
-    .header-stats { display: none; }
-    .form-row { grid-template-columns: 1fr; }
-    th:nth-child(3), td:nth-child(3) { display: none; }
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MVM NET — Clientes</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a24;
+      --border: #2a2a38;
+      --accent: #f97316;
+      --accent2: #3b82f6;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --green: #22c55e;
+      --red: #ef4444;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px 60px;
+    }
+
+    /* Header */
+    header {
+      padding: 32px 0 40px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+
+    .logo {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .logo-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .logo-title {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    .logo-title span {
+      color: var(--accent);
+    }
+
+    .header-stats {
+      display: flex;
+      gap: 32px;
+      align-items: flex-end;
+    }
+
+    .stat {
+      text-align: right;
+    }
+
+    .stat-num {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .stat-num.green {
+      color: var(--green);
+    }
+
+    .stat-num.orange {
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .search-wrap {
+      flex: 1;
+      min-width: 200px;
+      position: relative;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 16px 12px 44px;
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-wrap input:focus {
+      border-color: var(--accent);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #ea6a00;
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-ghost.active {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    /* Table */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead tr {
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    th {
+      padding: 14px 20px;
+      text-align: left;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: var(--surface2);
+    }
+
+    td {
+      padding: 16px 20px;
+      font-size: 14px;
+    }
+
+    .td-nome {
+      font-weight: 600;
+    }
+
+    .td-tel {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .td-dia {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .badge-active {
+      background: rgba(34, 197, 94, 0.12);
+      color: var(--green);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+    }
+
+    .badge-inactive {
+      background: rgba(107, 107, 128, 0.12);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+
+    .icon-btn:hover {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    .icon-btn.danger:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .icon-btn.toggle-btn:hover {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .empty-text {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .empty-sub {
+      font-size: 14px;
+    }
+
+    /* Modal */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 480px;
+      animation: slideUp 0.2s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-header {
+      padding: 24px 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .modal-close:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 14px;
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+    }
+
+    select option {
+      background: var(--surface2);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .toggle-wrap label {
+      margin: 0;
+      font-size: 13px;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .toggle {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .slider::before {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      left: 3px;
+      top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    .toggle input:checked+.slider {
+      background: var(--green);
+    }
+
+    .toggle input:checked+.slider::before {
+      transform: translateX(18px);
+    }
+
+    .modal-footer {
+      padding: 0 24px 24px;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 200;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .toast.error {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    /* Confirm dialog */
+    .confirm-modal {
+      max-width: 380px;
+    }
+
+    .confirm-text {
+      font-size: 15px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    @media (max-width: 640px) {
+      .header-stats {
+        display: none;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      th:nth-child(3),
+      td:nth-child(3) {
+        display: none;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="container">
-  <header>
-    <div class="logo">
-      <span class="logo-tag">// painel de gestão</span>
-      <h1 class="logo-title">MVM <span>NET</span></h1>
-    </div>
-    <div class="header-stats">
-      <div class="stat">
-        <div class="stat-num green" id="stat-ativos">—</div>
-        <div class="stat-label">Ativos</div>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <span class="logo-tag">// painel de gestão</span>
+        <h1 class="logo-title">MVM <span>NET</span></h1>
       </div>
-      <div class="stat">
-        <div class="stat-num orange" id="stat-total">—</div>
-        <div class="stat-label">Total</div>
+      <div class="header-stats">
+        <div class="stat">
+          <div class="stat-num green" id="stat-ativos">—</div>
+          <div class="stat-label">Ativos</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num orange" id="stat-total">—</div>
+          <div class="stat-label">Total</div>
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <div class="toolbar">
-    <div class="search-wrap">
-      <span class="search-icon">⌕</span>
-      <input type="text" id="search" placeholder="Buscar por nome, telefone ou plano...">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="search" placeholder="Buscar por nome, telefone ou plano...">
+      </div>
+      <button class="btn btn-ghost" id="filter-btn" onclick="toggleFilter()">Só ativos</button>
+      <button class="btn btn-primary" onclick="openModal()">+ Novo cliente</button>
     </div>
-    <button class="btn btn-ghost" id="filter-btn" onclick="toggleFilter()">Só ativos</button>
-    <button class="btn btn-primary" onclick="openModal()">+ Novo cliente</button>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Telefone</th>
+            <th>Vencimento</th>
+            <th>Plano</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
   </div>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Telefone</th>
-          <th>Vencimento</th>
-          <th>Plano</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
-</div>
-
-<!-- Modal Adicionar/Editar -->
-<div class="overlay" id="modal-overlay" onclick="closeOnOverlay(event)">
-  <div class="modal">
-    <div class="modal-header">
-      <h2 class="modal-title" id="modal-title">Novo Cliente</h2>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="edit-id">
-      <div class="form-group">
-        <label>Nome completo</label>
-        <input type="text" id="f-nome" placeholder="Ex: João Silva">
+  <!-- Modal Adicionar/Editar -->
+  <div class="overlay" id="modal-overlay" onclick="closeOnOverlay(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-title">Novo Cliente</h2>
+        <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
-      <div class="form-row">
+      <div class="modal-body">
+        <input type="hidden" id="edit-id">
         <div class="form-group">
-          <label>Telefone (com DDI+DDD)</label>
-          <input type="text" id="f-tel" placeholder="5511999990001">
+          <label>Nome completo</label>
+          <input type="text" id="f-nome" placeholder="Ex: João Silva">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Telefone (com DDD)</label>
+            <input type="text" id="f-tel" placeholder="11999990001">
+          </div>
+          <div class="form-group">
+            <label>Dia do vencimento</label>
+            <input type="number" id="f-dia" min="1" max="28" placeholder="Ex: 10">
+          </div>
         </div>
         <div class="form-group">
-          <label>Dia do vencimento</label>
-          <input type="number" id="f-dia" min="1" max="28" placeholder="Ex: 10">
+          <label>Plano</label>
+          <input type="text" id="f-plano" placeholder="Ex: Fibra 500MB">
+        </div>
+        <div class="form-group">
+          <div class="toggle-wrap">
+            <label class="toggle">
+              <input type="checkbox" id="f-ativo" checked>
+              <span class="slider"></span>
+            </label>
+            <label for="f-ativo">Cliente ativo (recebe lembretes)</label>
+          </div>
         </div>
       </div>
-      <div class="form-group">
-        <label>Plano</label>
-        <input type="text" id="f-plano" placeholder="Ex: Fibra 500MB">
-      </div>
-      <div class="form-group">
-        <div class="toggle-wrap">
-          <label class="toggle">
-            <input type="checkbox" id="f-ativo" checked>
-            <span class="slider"></span>
-          </label>
-          <label for="f-ativo">Cliente ativo (recebe lembretes)</label>
-        </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvar()">Salvar cliente</button>
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvar()">Salvar cliente</button>
+  </div>
+
+  <!-- Modal Confirmar Exclusão -->
+  <div class="overlay" id="confirm-overlay" onclick="closeConfirmOnOverlay(event)">
+    <div class="modal confirm-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Excluir cliente</h2>
+        <button class="modal-close" onclick="closeConfirm()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja excluir <strong id="confirm-nome"></strong>?</p>
+        <p class="confirm-text">Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeConfirm()">Cancelar</button>
+        <button class="btn btn-primary" style="background:var(--red)" onclick="confirmarExclusao()">Excluir</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Modal Confirmar Exclusão -->
-<div class="overlay" id="confirm-overlay" onclick="closeConfirmOnOverlay(event)">
-  <div class="modal confirm-modal">
-    <div class="modal-header">
-      <h2 class="modal-title">Excluir cliente</h2>
-      <button class="modal-close" onclick="closeConfirm()">✕</button>
-    </div>
-    <div class="modal-body">
-      <p>Tem certeza que deseja excluir <strong id="confirm-nome"></strong>?</p>
-      <p class="confirm-text">Esta ação não pode ser desfeita.</p>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeConfirm()">Cancelar</button>
-      <button class="btn btn-primary" style="background:var(--red)" onclick="confirmarExclusao()">Excluir</button>
-    </div>
-  </div>
-</div>
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
 
-<!-- Toast -->
-<div class="toast" id="toast"></div>
+  <script>
+    let clientes = [];
+    let filtroAtivos = false;
+    let deleteId = null;
 
-<script>
-  let clientes = [];
-  let filtroAtivos = false;
-  let deleteId = null;
-
-  async function carregar() {
-    try {
-      const res = await fetch('/api/clientes');
-      clientes = await res.json();
-      renderizar();
-      atualizarStats();
-    } catch(e) {
-      toast('Erro ao carregar clientes', 'error');
+    async function carregar() {
+      try {
+        const res = await fetch('/api/clientes');
+        clientes = await res.json();
+        renderizar();
+        atualizarStats();
+      } catch (e) {
+        toast('Erro ao carregar clientes', 'error');
+      }
     }
-  }
 
-  function atualizarStats() {
-    document.getElementById('stat-total').textContent = clientes.length;
-    document.getElementById('stat-ativos').textContent = clientes.filter(c => c.ativo).length;
-  }
+    function atualizarStats() {
+      document.getElementById('stat-total').textContent = clientes.length;
+      document.getElementById('stat-ativos').textContent = clientes.filter(c => c.ativo).length;
+    }
 
-  function renderizar() {
-    const busca = document.getElementById('search').value.toLowerCase();
-    let lista = clientes;
+    function renderizar() {
+      const busca = document.getElementById('search').value.toLowerCase();
+      let lista = clientes;
 
-    if (filtroAtivos) lista = lista.filter(c => c.ativo);
-    if (busca) lista = lista.filter(c =>
-      c.nome.toLowerCase().includes(busca) ||
-      c.telefone.includes(busca) ||
-      (c.plano || '').toLowerCase().includes(busca)
-    );
+      if (filtroAtivos) lista = lista.filter(c => c.ativo);
+      if (busca) lista = lista.filter(c =>
+        c.nome.toLowerCase().includes(busca) ||
+        c.telefone.includes(busca) ||
+        (c.plano || '').toLowerCase().includes(busca)
+      );
 
-    const tbody = document.getElementById('tbody');
+      const tbody = document.getElementById('tbody');
 
-    if (lista.length === 0) {
-      tbody.innerHTML = `
+      if (lista.length === 0) {
+        tbody.innerHTML = `
         <tr><td colspan="6">
           <div class="empty">
             <div class="empty-icon">📭</div>
@@ -647,10 +765,10 @@
             <div class="empty-sub">Adicione um novo cliente para começar</div>
           </div>
         </td></tr>`;
-      return;
-    }
+        return;
+      }
 
-    tbody.innerHTML = lista.map(c => `
+      tbody.innerHTML = lista.map(c => `
       <tr>
         <td class="td-nome">${esc(c.nome)}</td>
         <td class="td-tel">${esc(c.telefone)}</td>
@@ -672,124 +790,125 @@
         </td>
       </tr>
     `).join('');
-  }
-
-  function esc(str) {
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  function toggleFilter() {
-    filtroAtivos = !filtroAtivos;
-    document.getElementById('filter-btn').classList.toggle('active', filtroAtivos);
-    renderizar();
-  }
-
-  document.getElementById('search').addEventListener('input', renderizar);
-
-  // Modal
-  function openModal(cliente = null) {
-    document.getElementById('edit-id').value = cliente ? cliente.id : '';
-    document.getElementById('modal-title').textContent = cliente ? 'Editar Cliente' : 'Novo Cliente';
-    document.getElementById('f-nome').value = cliente ? cliente.nome : '';
-    document.getElementById('f-tel').value = cliente ? cliente.telefone : '';
-    document.getElementById('f-dia').value = cliente ? cliente.dia_vencimento : '';
-    document.getElementById('f-plano').value = cliente ? (cliente.plano || '') : '';
-    document.getElementById('f-ativo').checked = cliente ? cliente.ativo : true;
-    document.getElementById('modal-overlay').classList.add('open');
-    setTimeout(() => document.getElementById('f-nome').focus(), 100);
-  }
-
-  function closeModal() {
-    document.getElementById('modal-overlay').classList.remove('open');
-  }
-
-  function closeOnOverlay(e) {
-    if (e.target === document.getElementById('modal-overlay')) closeModal();
-  }
-
-  function editar(id) {
-    const c = clientes.find(x => x.id === id);
-    if (c) openModal(c);
-  }
-
-  async function salvar() {
-    const id = document.getElementById('edit-id').value;
-    const dados = {
-      nome: document.getElementById('f-nome').value.trim(),
-      telefone: document.getElementById('f-tel').value.trim(),
-      dia_vencimento: parseInt(document.getElementById('f-dia').value),
-      plano: document.getElementById('f-plano').value.trim(),
-      ativo: document.getElementById('f-ativo').checked,
-    };
-
-    if (!dados.nome || !dados.telefone || !dados.dia_vencimento) {
-      toast('Preencha nome, telefone e dia', 'error');
-      return;
     }
 
-    try {
-      const url = id ? `/api/clientes/${id}` : '/api/clientes';
-      const method = id ? 'PUT' : 'POST';
-      await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(dados) });
-      closeModal();
-      await carregar();
-      toast(id ? 'Cliente atualizado!' : 'Cliente adicionado!', 'success');
-    } catch(e) {
-      toast('Erro ao salvar', 'error');
+    function esc(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
-  }
 
-  async function toggleAtivo(id) {
-    try {
-      await fetch(`/api/clientes/${id}/toggle`, { method: 'PATCH' });
-      await carregar();
-      toast('Status atualizado!', 'success');
-    } catch(e) {
-      toast('Erro ao atualizar', 'error');
+    function toggleFilter() {
+      filtroAtivos = !filtroAtivos;
+      document.getElementById('filter-btn').classList.toggle('active', filtroAtivos);
+      renderizar();
     }
-  }
 
-  function excluir(id, nome) {
-    deleteId = id;
-    document.getElementById('confirm-nome').textContent = nome;
-    document.getElementById('confirm-overlay').classList.add('open');
-  }
+    document.getElementById('search').addEventListener('input', renderizar);
 
-  function closeConfirm() {
-    document.getElementById('confirm-overlay').classList.remove('open');
-    deleteId = null;
-  }
-
-  function closeConfirmOnOverlay(e) {
-    if (e.target === document.getElementById('confirm-overlay')) closeConfirm();
-  }
-
-  async function confirmarExclusao() {
-    if (!deleteId) return;
-    try {
-      await fetch(`/api/clientes/${deleteId}`, { method: 'DELETE' });
-      closeConfirm();
-      await carregar();
-      toast('Cliente excluído!', 'success');
-    } catch(e) {
-      toast('Erro ao excluir', 'error');
+    // Modal
+    function openModal(cliente = null) {
+      document.getElementById('edit-id').value = cliente ? cliente.id : '';
+      document.getElementById('modal-title').textContent = cliente ? 'Editar Cliente' : 'Novo Cliente';
+      document.getElementById('f-nome').value = cliente ? cliente.nome : '';
+      document.getElementById('f-tel').value = cliente ? ("55" + cliente.telefone) : '';
+      document.getElementById('f-dia').value = cliente ? cliente.dia_vencimento : '';
+      document.getElementById('f-plano').value = cliente ? (cliente.plano || '') : '';
+      document.getElementById('f-ativo').checked = cliente ? cliente.ativo : true;
+      document.getElementById('modal-overlay').classList.add('open');
+      setTimeout(() => document.getElementById('f-nome').focus(), 100);
     }
-  }
 
-  function toast(msg, type = 'success') {
-    const el = document.getElementById('toast');
-    el.textContent = (type === 'success' ? '✓ ' : '✕ ') + msg;
-    el.className = `toast ${type} show`;
-    setTimeout(() => el.classList.remove('show'), 3000);
-  }
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('open');
+    }
 
-  // Keyboard
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeModal(); closeConfirm(); }
-    if (e.key === 'Enter' && document.getElementById('modal-overlay').classList.contains('open')) salvar();
-  });
+    function closeOnOverlay(e) {
+      if (e.target === document.getElementById('modal-overlay')) closeModal();
+    }
 
-  carregar();
-</script>
+    function editar(id) {
+      const c = clientes.find(x => x.id === id);
+      if (c) openModal(c);
+    }
+
+    async function salvar() {
+      const id = document.getElementById('edit-id').value;
+      const dados = {
+        nome: document.getElementById('f-nome').value.trim(),
+        telefone: document.getElementById('f-tel').value.trim(),
+        dia_vencimento: parseInt(document.getElementById('f-dia').value),
+        plano: document.getElementById('f-plano').value.trim(),
+        ativo: document.getElementById('f-ativo').checked,
+      };
+
+      if (!dados.nome || !dados.telefone || !dados.dia_vencimento) {
+        toast('Preencha nome, telefone e dia', 'error');
+        return;
+      }
+
+      try {
+        const url = id ? `/api/clientes/${id}` : '/api/clientes';
+        const method = id ? 'PUT' : 'POST';
+        await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
+        closeModal();
+        await carregar();
+        toast(id ? 'Cliente atualizado!' : 'Cliente adicionado!', 'success');
+      } catch (e) {
+        toast('Erro ao salvar', 'error');
+      }
+    }
+
+    async function toggleAtivo(id) {
+      try {
+        await fetch(`/api/clientes/${id}/toggle`, { method: 'PATCH' });
+        await carregar();
+        toast('Status atualizado!', 'success');
+      } catch (e) {
+        toast('Erro ao atualizar', 'error');
+      }
+    }
+
+    function excluir(id, nome) {
+      deleteId = id;
+      document.getElementById('confirm-nome').textContent = nome;
+      document.getElementById('confirm-overlay').classList.add('open');
+    }
+
+    function closeConfirm() {
+      document.getElementById('confirm-overlay').classList.remove('open');
+      deleteId = null;
+    }
+
+    function closeConfirmOnOverlay(e) {
+      if (e.target === document.getElementById('confirm-overlay')) closeConfirm();
+    }
+
+    async function confirmarExclusao() {
+      if (!deleteId) return;
+      try {
+        await fetch(`/api/clientes/${deleteId}`, { method: 'DELETE' });
+        closeConfirm();
+        await carregar();
+        toast('Cliente excluído!', 'success');
+      } catch (e) {
+        toast('Erro ao excluir', 'error');
+      }
+    }
+
+    function toast(msg, type = 'success') {
+      const el = document.getElementById('toast');
+      el.textContent = (type === 'success' ? '✓ ' : '✕ ') + msg;
+      el.className = `toast ${type} show`;
+      setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    // Keyboard
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { closeModal(); closeConfirm(); }
+      if (e.key === 'Enter' && document.getElementById('modal-overlay').classList.contains('open')) salvar();
+    });
+
+    carregar();
+  </script>
 </body>
+
 </html>
