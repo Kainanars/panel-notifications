@@ -26,6 +26,9 @@ const connectionString = process.env.DATABASE_URL || process.env.DB_URL;
 const dbHost = normalizeHost(process.env.DB_HOST) || 'localhost';
 const dbPort = Number(process.env.DB_PORT || 5432);
 const useSSL = process.env.DB_SSL === 'true';
+const dbTarget = connectionString
+  ? 'DATABASE_URL/DB_URL'
+  : `${dbHost}:${dbPort}`;
 
 const pool = connectionString
   ? new Pool({
@@ -43,15 +46,34 @@ const pool = connectionString
       ssl: useSSL ? { rejectUnauthorized: false } : false,
     });
 
+function errorDetails(err) {
+  return {
+    message: err?.message || 'sem mensagem',
+    code: err?.code || 'N/A',
+    errno: err?.errno || 'N/A',
+    address: err?.address || 'N/A',
+    port: err?.port || 'N/A',
+    syscall: err?.syscall || 'N/A',
+  };
+}
+
 async function waitForDB() {
+  let attempt = 0;
+
+  console.log(`Tentando conectar no banco: ${dbTarget}`);
+
   while (true) {
+    attempt += 1;
     try {
       await pool.query('SELECT 1');
-      console.log('✅ Banco conectado');
+      console.log(`✅ Banco conectado (tentativa ${attempt})`);
       break;
     } catch (err) {
-      console.log(`Falha ao conectar no banco: ${err.message}`);
-      console.log('⏳ Aguardando banco...');
+      const details = errorDetails(err);
+      console.log(
+        `[DB][tentativa ${attempt}] Falha ao conectar: ${details.message} | code=${details.code} errno=${details.errno} address=${details.address} port=${details.port} syscall=${details.syscall}`,
+      );
+      console.log('⏳ Aguardando banco por 2s...');
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }
@@ -135,10 +157,7 @@ function startServer() {
   waitForDB()
     .then(() => {
       app.listen(PORT, () => {
-        const target = connectionString
-          ? 'DATABASE_URL/DB_URL'
-          : `${dbHost}:${dbPort}`;
-        console.log(`Painel rodando na porta ${PORT} | Banco: ${target}`);
+        console.log(`Painel rodando na porta ${PORT} | Banco: ${dbTarget}`);
       });
     })
     .catch((err) => {
