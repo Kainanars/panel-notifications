@@ -15,6 +15,19 @@ const pool = new Pool({
   connectionTimeoutMillis: 5000,
 });
 
+async function waitForDB() {
+  while (true) {
+    try {
+      await pool.query('SELECT 1');
+      console.log('✅ Banco conectado');
+      break;
+    } catch (err) {
+      console.log('⏳ Aguardando banco...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+}
+
 // Health check
 app.get('/health', async (req, res) => {
   try {
@@ -89,4 +102,12 @@ app.delete('/api/clientes/:id', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3030;
-app.listen(PORT, () => console.log(`Painel rodando na porta ${PORT}`));
+async function startServer() {
+  await waitForDB();
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Painel rodando na porta ${PORT}`);
+  });
+}
+
+startServer();
