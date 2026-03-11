@@ -1,19 +1,47 @@
 const express = require('express');
 const { Pool } = require('pg');
-const path = require('path');
+const path = require('node:path');
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const pool = new Pool({
-  host: process.env.DB_HOST || 'postgresql',
-  database: process.env.DB_NAME || 'n8n',
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  port: 5432,
-  connectionTimeoutMillis: 5000,
-});
+function normalizeHost(rawHost) {
+  if (!rawHost) return null;
+  const trimmed = rawHost.trim();
+
+  // Some providers expose DB_HOST as a full URL instead of a hostname.
+  if (trimmed.includes('://')) {
+    try {
+      return new URL(trimmed).hostname;
+    } catch {
+      return trimmed;
+    }
+  }
+
+  return trimmed;
+}
+
+const connectionString = process.env.DATABASE_URL || process.env.DB_URL;
+const dbHost = normalizeHost(process.env.DB_HOST) || 'localhost';
+const dbPort = Number(process.env.DB_PORT || 5432);
+const useSSL = process.env.DB_SSL === 'true';
+
+const pool = connectionString
+  ? new Pool({
+      connectionString,
+      connectionTimeoutMillis: 5000,
+      ssl: useSSL ? { rejectUnauthorized: false } : false,
+    })
+  : new Pool({
+      host: dbHost,
+      database: process.env.DB_NAME || 'n8n',
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      port: dbPort,
+      connectionTimeoutMillis: 5000,
+      ssl: useSSL ? { rejectUnauthorized: false } : false,
+    });
 
 async function waitForDB() {
   while (true) {
@@ -22,8 +50,9 @@ async function waitForDB() {
       console.log('✅ Banco conectado');
       break;
     } catch (err) {
+      console.log(`Falha ao conectar no banco: ${err.message}`);
       console.log('⏳ Aguardando banco...');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }
 }
@@ -102,12 +131,20 @@ app.delete('/api/clientes/:id', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3030;
-async function startServer() {
-  await waitForDB();
-
-  app.listen(PORT, () => {
-    console.log(`🚀 Painel rodando na porta ${PORT}`);
-  });
+function startServer() {
+  waitForDB()
+    .then(() => {
+      app.listen(PORT, () => {
+        const target = connectionString
+          ? 'DATABASE_URL/DB_URL'
+          : `${dbHost}:${dbPort}`;
+        console.log(`Painel rodando na porta ${PORT} | Banco: ${target}`);
+      });
+    })
+    .catch((err) => {
+      console.error(`Erro ao iniciar servidor: ${err.message}`);
+      process.exit(1);
+    });
 }
 
 startServer();
